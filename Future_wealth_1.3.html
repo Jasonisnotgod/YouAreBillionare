@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>未来财富计算器</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 20px;
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+        label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .buttons {
+            margin: 10px 0;
+        }
+        input[type="number"] {
+            margin-left: 10px;
+            width: 80px;
+        }
+        .output {
+            margin-top: 20px;
+            font-size: 1.2em;
+            color: #333;
+        }
+        .highlight {
+            color: #d9534f;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>未来财富计算器</h1>
+
+    <!-- 投资额 -->
+    <div class="section">
+        <label for="investment">投资额（元）：</label>
+        <div class="buttons">
+            <button onclick="setValue('investment', 10)">10</button>
+            <button onclick="setValue('investment', 100)">100</button>
+            <button onclick="setValue('investment', 500)">500</button>
+            <button onclick="setValue('investment', 1000)">1000</button>
+            <button onclick="setValue('investment', 5000)">5000</button>
+            <button onclick="setValue('investment', 10000)">10000</button>
+        </div>
+        <input type="range" id="investment" min="0" max="20000" step="100" value="1000" oninput="updateLabel('investment', 'investmentLabel')">
+        <span id="investmentLabel">1000</span> 元
+        <input type="number" id="investmentInput" value="1000" min="0" max="20000" oninput="syncInput('investmentInput', 'investment')">
+    </div>
+
+    <!-- 综合复利率 -->
+    <div class="section">
+        <label for="rate">综合复利率（%）：</label>
+        <div class="buttons">
+            <button onclick="setValue('rate', 2)">2%</button>
+            <button onclick="setValue('rate', 5)">5%</button>
+            <button onclick="setValue('rate', 10)">10%</button>
+            <button onclick="setValue('rate', 20)">20%</button>
+            <button onclick="setValue('rate', 50)">50%</button>
+            <button onclick="setValue('rate', 100)">100%</button>
+        </div>
+        <input type="range" id="rate" min="1" max="300" step="1" value="5" oninput="updateLabel('rate', 'rateLabel')">
+        <span id="rateLabel">5</span> %
+        <input type="number" id="rateInput" value="5" min="1" max="300" oninput="syncInput('rateInput', 'rate')">
+    </div>
+
+    <!-- 时间 -->
+    <div class="section">
+        <label for="time">时间（年）：</label>
+        <div class="buttons">
+            <button onclick="setValue('time', 1)">1年</button>
+            <button onclick="setValue('time', 5)">5年</button>
+            <button onclick="setValue('time', 10)">10年</button>
+            <button onclick="setValue('time', 20)">20年</button>
+            <button onclick="setValue('time', 50)">50年</button>
+            <button onclick="setValue('time', 100)">100年</button>
+        </div>
+        <input type="range" id="time" min="1" max="200" step="1" value="10" oninput="updateLabel('time', 'timeLabel')">
+        <span id="timeLabel">10</span> 年
+        <input type="number" id="timeInput" value="10" min="1" max="200" oninput="syncInput('timeInput', 'time')">
+    </div>
+
+    <!-- 计算按钮 -->
+    <button onclick="calculateWealth()">计算未来财富</button>
+
+    <!-- 输出结果 -->
+    <div class="output" id="output">结果将显示在这里。</div>
+
+    <script>
+        // 更新滑块标签
+        function updateLabel(sliderId, labelId) {
+            const value = document.getElementById(sliderId).value;
+            document.getElementById(labelId).innerText = value;
+        }
+
+        // 输入框与滑块同步
+        function syncInput(inputId, sliderId) {
+            const value = document.getElementById(inputId).value;
+            document.getElementById(sliderId).value = value;
+            updateLabel(sliderId, sliderId + 'Label');
+        }
+
+        // 设置滑块值
+        function setValue(sliderId, value) {
+            document.getElementById(sliderId).value = value;
+            document.getElementById(sliderId + "Input").value = value;
+            updateLabel(sliderId, sliderId + 'Label');
+        }
+
+        // 计算未来财富
+        function calculateWealth() {
+            const P = parseFloat(document.getElementById('investment').value); // 每期投资额
+            const r = parseFloat(document.getElementById('rate').value) / 100; // 年化复利率
+            const m = 12; // 每年定投次数（月定投）
+            const n = parseFloat(document.getElementById('time').value); // 投资时间
+
+            // 计算总财富值
+            const totalPeriods = m * n;
+            const periodicRate = r / m;
+            const futureValue = P * (Math.pow(1 + periodicRate, totalPeriods) - 1) / periodicRate;
+
+            // 计算达到目标金额的时间
+            const targets = [
+                { amount: 1000000, title: "百万富翁" },
+                { amount: 10000000, title: "千万富翁" },
+                { amount: 100000000, title: "亿万富翁" }
+            ];
+            let targetResults = "";
+
+            targets.forEach((target) => {
+                let currentWealth = 0;
+                let months = 0;
+
+                while (currentWealth < target.amount) {
+                    months++;
+                    currentWealth = P * (Math.pow(1 + periodicRate, months) - 1) / periodicRate;
+                }
+
+                const years = Math.floor(months / 12);
+                const remainingMonths = months % 12;
+                targetResults += `<br>🎉 恭喜你，你将在 <span class="highlight">${years} 年 ${remainingMonths} 月</span> 后成为 <span class="highlight">${target.title}</span>！`;
+            });
+
+            // 显示结果
+            const outputDiv = document.getElementById('output');
+            outputDiv.innerHTML = `
+                如果您每月投资 <strong>${P.toFixed(2)} 元</strong>，
+                以 <strong>${(r * 100).toFixed(2)}%</strong> 的年化复利率投资 <strong>${n} 年</strong>，
+                您的未来财富将达到：<span class="highlight">${futureValue.toFixed(2)} 元</span>。
+                ${targetResults}
+            `;
+        }
+    </script>
+</body>
+</html>
